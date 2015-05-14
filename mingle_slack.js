@@ -1,9 +1,19 @@
 var fs = require('fs');
-var lastUpdated = JSON.parse(fs.readFileSync("./lastUpdated.json"));
 var Slack = require('slack-node');
 var activityList = require('./activityList.js');
 var data = JSON.parse(fs.readFileSync("./data.json"));
 var req = require('./request.js');
+var LAST_UPDATED_FILE_NAME = "./lastUpdated.json";
+var lastUpdated = JSON.parse(fs.readFileSync(LAST_UPDATED_FILE_NAME));
+
+
+var ms = {};
+exports.ms = ms;
+
+ms.createLastUpdateForTest = function(path) {
+	LAST_UPDATED_FILE_NAME = path;
+	lastUpdated = JSON.parse(fs.readFileSync(path));
+}
 
 var getProjectOf = function(event) {
 	return event.id[0].split("/")[4];
@@ -65,12 +75,10 @@ var handleEvent = function(event, callback) {
 	var activities = getActivities(event);
 	if(arePresent(activities)){
 		var headerMessage = getHeaderMessage(event);
-
 		activities.forEach(function(activity) {
-			if(activityList[getTypeOf(activity)])
 			activityList[getTypeOf(activity)](headerMessage,activity, callback);
 		});	
-	}
+	} else callback(null, "Ignoring event...(Filtered)");
 }
 
 var handleEvents = function(events, callback) {
@@ -81,16 +89,15 @@ var handleEvents = function(events, callback) {
 
 var updateLastUpdatedValue = function(newValue,project) {
 	lastUpdated[project] = newValue;
-	fs.writeFileSync("./lastUpdated.json", JSON.stringify(lastUpdated));
+	fs.writeFileSync(LAST_UPDATED_FILE_NAME, JSON.stringify(lastUpdated));
 }
 
-var manupilateMingleData = function(mingleData, callback) { // callback with messages
+ms.manupilateMingleData = function(mingleData, callback) { // callback with messages
 	var events = getUnUpdatedEventsFromMingleData(mingleData);
 	if(events.length>0){
-		console.log("Updating "+ events.length +" events");
 		handleEvents(events, callback);
 		updateLastUpdatedValue(mingleData.feed.updated[0],getProjectOf(events[0])); 
-	} else console.log("No important events to Update");
+	} else callback(null,"No important events to update");
 }
 
 var sendToSlack = function(message, slackData) {
@@ -108,8 +115,9 @@ var sendToSlack = function(message, slackData) {
 
 var runForEach = function(apiData) {
 	req.requestMingle(apiData.mingle, function(mingleData) {
-		manupilateMingleData(mingleData, function(messages) {
-			sendToSlack(messages, apiData.slack);
+		ms.manupilateMingleData(mingleData, function(message, log) {
+			log && console.log(log);
+			message && sendToSlack(message, apiData.slack);
 		});
 	});
 }
