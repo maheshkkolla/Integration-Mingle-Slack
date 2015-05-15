@@ -94,9 +94,9 @@ activityList['property-change'] = function(headerMessage, activity, callback) {
 }
 
 activityList['tag-addition'] = function(headerMessage, activity, callback) {
-	callback(headerMessage + "Tag added : *" + activity.tag[0],UPDATING_EVENT_MESSAGE)+"*";
+	callback(headerMessage + "Tag added : *" + activity.tag[0] + "*",UPDATING_EVENT_MESSAGE);
 }
 
 activityList['tag-deletion'] = function(headerMessage, activity, callback) {
-	callback(headerMessage + "Tag removed : *" + activity.tag[0],UPDATING_EVENT_MESSAGE)+"*";
+	callback(headerMessage + "Tag removed : *" + activity.tag[0] + "*",UPDATING_EVENT_MESSAGE);
 }

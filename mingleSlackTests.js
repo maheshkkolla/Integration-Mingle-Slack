@@ -82,8 +82,8 @@ describe('Mingle-Slack-Integration', function(){
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
 				assert.equal(message,"--- New Event ---\nTitle: TITLE\n" +
-					"Author: AUTHOR\t\tUpdated At: "+ new Date().toString()+"\n" +
-					"Story Status changed from OLD_VALUE to NEW_VALUE.\n");
+					"Author: *AUTHOR*\t\tUpdated At: "+ new Date().toString()+"\n" +
+					"Story Status changed from *OLD_VALUE* to *NEW_VALUE*.\n");
 				done();
 			});
 		});
@@ -99,8 +99,8 @@ describe('Mingle-Slack-Integration', function(){
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
 				assert.equal(message,"--- New Event ---\nTitle: TITLE\n" +
-					"Author: AUTHOR\t\tUpdated At: "+ new Date().toString()+"\n" +
-					"Tag added : TAG");
+					"Author: *AUTHOR*\t\tUpdated At: "+ new Date().toString()+"\n" +
+					"Tag added : *TAG*");
 				done();
 			});
 		});
@@ -116,8 +116,8 @@ describe('Mingle-Slack-Integration', function(){
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
 				assert.equal(message,"--- New Event ---\nTitle: TITLE\n" +
-					"Author: AUTHOR\t\tUpdated At: "+ new Date().toString()+"\n" +
-					"Tag removed : TAG");
+					"Author: *AUTHOR*\t\tUpdated At: "+ new Date().toString()+"\n" +
+					"Tag removed : *TAG*");
 				done();
 			});
 		});

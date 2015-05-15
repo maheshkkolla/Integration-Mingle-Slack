@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "tests": "node_modules/mocha/bin/mocha mingleSlackTests.js"
   },
   "dependencies": {
     "xml2js": "*",
-    "slack-node": "*"
-  },
+    "slack-node": "*",
+    "mocha": "*"
+  },  
   "devdependencies": {
     "mocha": "*"
   }
