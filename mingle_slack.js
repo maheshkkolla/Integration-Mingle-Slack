@@ -41,10 +41,9 @@ var getUnUpdatedEventsFromMingleData = function(mingleData) {
 }
 
 var getHeaderMessage = function(event) {
-	var messageToSend = "--- New Event ---\n";
-	messageToSend += "Title: " + event.title[0];
-	messageToSend += "\nAuthor: *" + event.author[0].name[0] + "*";
-	messageToSend += "\t\tUpdated At: " + new Date(event.updated[0]).toString()+"\n";
+	messageToSend = event.title[0]+"\n";
+	messageToSend += event.link[1]['$'].href;
+	messageToSend += "\nAuthor: *" + event.author[0].name[0] + "*\n";
 	return messageToSend; 
 }
 
