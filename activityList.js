@@ -23,9 +23,9 @@ var hasBothValues = function(activity) {
 }
 
 var getStringTypeValues = function(activity) {
-	if(hasOnlyNewValue(activity)) return "to "+activity['new_value'][0];
-	if(hasOnlyOldValue(activity)) return ""+activity['old_value'][0];
-	return "from "+activity['old_value'][0]+" to "+activity['new_value'][0];
+	if(hasOnlyNewValue(activity)) return "to *"+activity['new_value'][0] + "*";
+	if(hasOnlyOldValue(activity)) return "*"+activity['old_value'][0] + "*";
+	return "from *"+activity['old_value'][0]+"* to *"+activity['new_value'][0] + "*";
 }
 
 // var getCardTypeValues = function(activity) {
@@ -49,9 +49,9 @@ var sendCardTypeMessage = function(preMessage, activity, callback) {
 	if(hasBothValues(activity)) {
 		var oldName = "", newName = "";
 		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
-			oldName =  " : " +cardData.card.name;
+			oldName =  " : *" + cardData.card.name+"*";
 			getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-				newName = " : " +cardData.card.name;
+				newName = " : *" + cardData.card.name+"*";
 				message += "from "+activity['old_value'][0].card[0].number[0]['_'] + oldName +
 					" to "+activity['new_value'][0].card[0].number[0]['_'] + newName;
 				callback(message, UPDATING_EVENT_MESSAGE);
@@ -61,14 +61,14 @@ var sendCardTypeMessage = function(preMessage, activity, callback) {
 	else if(hasOnlyNewValue(activity)){
 		message += "to "+activity['new_value'][0].card[0].number[0]['_'];
 		getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-			message + " : " +cardData.card.name;
+			message += " : *" +cardData.card.name+"*";
 			callback(message, UPDATING_EVENT_MESSAGE);
 		});
 	}
 	else {
 		message += "to "+activity['old_value'][0].card[0].number[0]['_'];
 		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
-			message + " : " +cardData.card.name;
+			message += " : *" +cardData.card.name+"*";
 			callback(message, UPDATING_EVENT_MESSAGE);
 		});	
 	}
@@ -94,9 +94,9 @@ activityList['property-change'] = function(headerMessage, activity, callback) {
 }
 
 activityList['tag-addition'] = function(headerMessage, activity, callback) {
-	callback(headerMessage + "Tag added : " + activity.tag[0],UPDATING_EVENT_MESSAGE);
+	callback(headerMessage + "Tag added : *" + activity.tag[0],UPDATING_EVENT_MESSAGE)+"*";
 }
 
 activityList['tag-deletion'] = function(headerMessage, activity, callback) {
-	callback(headerMessage + "Tag removed : " + activity.tag[0],UPDATING_EVENT_MESSAGE);
+	callback(headerMessage + "Tag removed : *" + activity.tag[0],UPDATING_EVENT_MESSAGE)+"*";
 }

@@ -5,7 +5,7 @@ var data = JSON.parse(fs.readFileSync("./data.json"));
 var req = require('./request.js');
 var LAST_UPDATED_FILE_NAME = "./lastUpdated.json";
 var lastUpdated = JSON.parse(fs.readFileSync(LAST_UPDATED_FILE_NAME));
-
+var domain = require('domain').create();
 
 var ms = {};
 exports.ms = ms;
@@ -70,9 +70,8 @@ var getActivities = function(event) {
 	return event.content[0].changes[0].change;
 }
 
-
 var handleEvent = function(event, callback) {
-	var activities = getActivities(event);
+	var activities = getActivities(event) || [];
 	if(arePresent(activities)){
 		var headerMessage = getHeaderMessage(event);
 		activities.forEach(function(activity) {
@@ -130,7 +129,10 @@ var run = function() {
 }
 
 
-run();
+domain.on('error', function(error) {
+	console.log("***** Error occurred: *****\n"+error);
+	console.log("\n##### Program didn,t stop, It is Running #####\n")
+});
 
-
+domain.run(run);
 
