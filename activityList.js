@@ -18,6 +18,10 @@ var hasOnlyOldValue = function(activity) {
 	return(!(activity['old_value'][0]['$']) && (activity['new_value'][0]['$']));
 }
 
+var hasBothValues = function(activity) {
+	return(!(activity['old_value'][0]['$']) && !(activity['new_value'][0]['$']));
+}
+
 var getStringTypeValues = function(activity) {
 	if(hasOnlyNewValue(activity)) return "to "+activity['new_value'][0];
 	if(hasOnlyOldValue(activity)) return ""+activity['old_value'][0];
@@ -42,15 +46,7 @@ var getCardNameOf = function(path,callback) {
 
 var sendCardTypeMessage = function(preMessage, activity, callback) {
 	var message = preMessage;
-	if(hasOnlyNewValue(activity)){
-		message += "to "+activity['new_value'][0].card[0].number[0]['_'];
-		getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-			message + " : " +cardData.card.name;
-			callback(message, UPDATING_EVENT_MESSAGE);
-		});
-	}
-	// else if(hasOnlyOldValue(activity)) message += ""+activity['old_value'][0].card[0].number[0]['_'];
-	else {
+	if(hasBothValues(activity)) {
 		var oldName = "", newName = "";
 		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
 			oldName =  " : " +cardData.card.name;
@@ -61,9 +57,20 @@ var sendCardTypeMessage = function(preMessage, activity, callback) {
 				callback(message, UPDATING_EVENT_MESSAGE);
 			});
 		});
-		
-
-		
+	}
+	else if(hasOnlyNewValue(activity)){
+		message += "to "+activity['new_value'][0].card[0].number[0]['_'];
+		getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
+			message + " : " +cardData.card.name;
+			callback(message, UPDATING_EVENT_MESSAGE);
+		});
+	}
+	else {
+		message += "to "+activity['old_value'][0].card[0].number[0]['_'];
+		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
+			message + " : " +cardData.card.name;
+			callback(message, UPDATING_EVENT_MESSAGE);
+		});	
 	}
 }
 
@@ -82,7 +89,7 @@ activityList.pc = {
 
 
 activityList['property-change'] = function(headerMessage, activity, callback) {
-	// if(activityList.pc[getNameOf(activity)])
+	if(activityList.pc[getNameOf(activity)])
 		activityList.pc[getNameOf(activity)](headerMessage, activity, callback);
 }
 

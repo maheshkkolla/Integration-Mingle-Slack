@@ -76,6 +76,7 @@ var handleEvent = function(event, callback) {
 	if(arePresent(activities)){
 		var headerMessage = getHeaderMessage(event);
 		activities.forEach(function(activity) {
+			if(activityList[getTypeOf(activity)])
 			activityList[getTypeOf(activity)](headerMessage,activity, callback);
 		});	
 	} else callback(null, "Ignoring event...(Filtered)");
@@ -128,4 +129,8 @@ var run = function() {
 	setTimeout(run,10000);
 }
 
+
 run();
+
+
+
