@@ -59,7 +59,7 @@ var arePresent = function(activities) {
 	var present = false;
 	activities.forEach(function(activity){
 		var activityType = getTypeOf(activity);
-		if(activityType == 'property-change' && activityList.pc[getNameOfPCA(activity)]) present=true; 
+		if(activityType == 'property-change' && activityList.pc[getNameOfPCA(activity)]) present=true;
 		if(activityList[activityType]) present=true;
 	});
 	return present;
@@ -107,29 +107,29 @@ var sendToSlack = function(message, slackData) {
 		username: slackData.userName,
 		text: message
 	} ,function(err,response){
-		err && console.log("Error at sending message to slack:",err);
-		console.log("Response from slack:",response.status);
+		err && console.log("["+new Date()+"]\tError at sending message to slack:",err);
+		console.log("["+new Date()+"]\tResponse from slack:",response.status);
 	});
 }
 
 var runForEach = function(apiData) {
 	req.requestMingle(apiData.mingle, function(mingleData) {
 		ms.manupilateMingleData(mingleData, function(message, log) {
-			log && console.log(log);
+			log && console.log("["+new Date()+"]\t"+log);
 			message && sendToSlack(message, apiData.slack);
 		});
 	});
 }
 
 var run = function() {
-	console.log("Requesting Mingle ...")
+	console.log("["+new Date()+"]\tRequesting Mingle ...")
 	data.forEach(runForEach);
 	setTimeout(run,10000);
 }
 
 
 domain.on('error', function(error) {
-	console.log("***** Error occurred: *****\n"+error);
+	console.log("["+new Date()+"]\t***** Error occurred: *****\n"+error);
 	console.log("\n##### Program didn,t stop, It is Running #####\n")
 });
 

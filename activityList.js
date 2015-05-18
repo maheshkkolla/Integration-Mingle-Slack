@@ -23,18 +23,10 @@ var hasBothValues = function(activity) {
 }
 
 var getStringTypeValues = function(activity) {
-	if(hasOnlyNewValue(activity)) return "to *"+activity['new_value'][0] + "*";
-	if(hasOnlyOldValue(activity)) return "*"+activity['old_value'][0] + "*";
-	return "from *"+activity['old_value'][0]+"* to *"+activity['new_value'][0] + "*";
+	if(hasOnlyNewValue(activity)) return "*"+activity['new_value'][0] + "*";
+	if(hasOnlyOldValue(activity)) return "*"+activity['old_value'][0] + "* -> nill";
+	return "*"+activity['old_value'][0]+"* -> *"+activity['new_value'][0] + "*";
 }
-
-// var getCardTypeValues = function(activity) {
-// 	if(hasOnlyNewValue(activity)) return "to "+activity['new_value'][0].card[0].number[0]['_'];
-// 	if(hasOnlyOldValue(activity)) return ""+activity['old_value'][0].card[0].number[0]['_'];
-// 	return "from "+activity['old_value'][0].card[0].number[0]['_'] +
-// 		" to "+activity['new_value'][0].card[0].number[0]['_'];
-// }
-
 
 var getCardNameOf = function(path,callback) {
 	req.requestMingle({
@@ -49,26 +41,26 @@ var sendCardTypeMessage = function(preMessage, activity, callback) {
 	if(hasBothValues(activity)) {
 		var oldName = "", newName = "";
 		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
-			oldName =  " : *" + cardData.card.name+"*";
+			oldName =  " (*" + cardData.card.name+"*)";
 			getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-				newName = " : *" + cardData.card.name+"*";
-				message += "from "+activity['old_value'][0].card[0].number[0]['_'] + oldName +
-					" to "+activity['new_value'][0].card[0].number[0]['_'] + newName;
+				newName = " (*" + cardData.card.name+"*)";
+				message += activity['old_value'][0].card[0].number[0]['_'] + oldName +
+					" -> "+activity['new_value'][0].card[0].number[0]['_'] + newName;
 				callback(message, UPDATING_EVENT_MESSAGE);
 			});
 		});
 	}
 	else if(hasOnlyNewValue(activity)){
-		message += "to "+activity['new_value'][0].card[0].number[0]['_'];
+		message += activity['new_value'][0].card[0].number[0]['_'];
 		getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-			message += " : *" +cardData.card.name+"*";
+			message += "(*" +cardData.card.name+"*)";
 			callback(message, UPDATING_EVENT_MESSAGE);
 		});
 	}
 	else {
-		message += "to "+activity['old_value'][0].card[0].number[0]['_'];
+		message += activity['old_value'][0].card[0].number[0]['_'];
 		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
-			message += " : *" +cardData.card.name+"*";
+			message += "(*" +cardData.card.name+"*) -> nill";
 			callback(message, UPDATING_EVENT_MESSAGE);
 		});	
 	}
@@ -77,13 +69,17 @@ var sendCardTypeMessage = function(preMessage, activity, callback) {
 activityList.pc = {
 	'Story Status': function(headerMessage, activity, callback) {
 		var values = getStringTypeValues(activity);
-		callback(headerMessage + "Story Status changed "+ values +".\n", UPDATING_EVENT_MESSAGE);
+		callback(headerMessage + "Story Status: "+ values +".\n", UPDATING_EVENT_MESSAGE);
 	},
 	'Planned Iteration' : function(headerMessage, activity, callback) {
-		sendCardTypeMessage(headerMessage+"Planned Iteration changed ", activity, callback);
+		sendCardTypeMessage(headerMessage+"Planned Iteration: ", activity, callback);
 	},
 	'Planned Release' : function(headerMessage, activity, callback) {
-		sendCardTypeMessage(headerMessage+"Planned Release changed ", activity, callback);	
+		sendCardTypeMessage(headerMessage+"Planned Release: ", activity, callback);	
+	},
+	'Estimate' : function(headerMessage, activity, callback) {
+		var values = getStringTypeValues(activity);
+		callback(headerMessage+"Estimate: "+values+"\n",UPDATING_EVENT_MESSAGE);
 	}
 };
 
