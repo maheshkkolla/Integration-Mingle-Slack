@@ -5,8 +5,8 @@ var data = JSON.parse(fs.readFileSync('./config.json'));
 var req = require('./request.js');
 
 var UPDAING_EVENT_LOG = "Updating event...";
-var MESSAGE_TEMPLATE = "@NAME@ : *@OLD_VALUE@* -> *@NEW_VALUE@*\tby *@AUTHOR@*";
-var SINGEL_VALUE_MESSAGE = "@TYPE@ : *@VALUE@*\tby *@AUTHOR@*";
+var MESSAGE_TEMPLATE = "@NAME@ : *@OLD_VALUE@* -> *@NEW_VALUE@* by *@AUTHOR@*";
+var SINGEL_VALUE_MESSAGE = "@TYPE@ : *@VALUE@* by *@AUTHOR@*";
 
 var getNameOf = function(activity) {
 	return activity.property_definition[0].name[0];
