@@ -1,34 +1,22 @@
 var activityList = {};
 module.exports = activityList;
 var fs = require('fs');
-var data = JSON.parse(fs.readFileSync('./data.json'));
+var data = JSON.parse(fs.readFileSync('./config.json'));
 var req = require('./request.js');
 
-var UPDATING_EVENT_MESSAGE = "Updating event...";
+var UPDAING_EVENT_LOG = "Updating event...";
+var MESSAGE_TEMPLATE = "@NAME@ : *@OLD_VALUE@* -> *@NEW_VALUE@*\tby *@AUTHOR@*";
+var SINGEL_VALUE_MESSAGE = "@TYPE@ : *@VALUE@*\tby *@AUTHOR@*";
 
 var getNameOf = function(activity) {
 	return activity.property_definition[0].name[0];
 }
 
-var hasOnlyNewValue = function(activity) {
-	return((activity['old_value'][0]['$']) && !(activity['new_value'][0]['$']));
+var getTypeOf = function(activity) {
+	return activity['$'].type;
 }
 
-var hasOnlyOldValue = function(activity) {
-	return(!(activity['old_value'][0]['$']) && (activity['new_value'][0]['$']));
-}
-
-var hasBothValues = function(activity) {
-	return(!(activity['old_value'][0]['$']) && !(activity['new_value'][0]['$']));
-}
-
-var getStringTypeValues = function(activity) {
-	if(hasOnlyNewValue(activity)) return "*"+activity['new_value'][0] + "*";
-	if(hasOnlyOldValue(activity)) return "*"+activity['old_value'][0] + "* -> nill";
-	return "*"+activity['old_value'][0]+"* -> *"+activity['new_value'][0] + "*";
-}
-
-var getCardNameOf = function(path,callback) {
+var requestForCardName = function(path,callback) {
 	req.requestMingle({
 		host: data[0].mingle.host,
 		path: path,
@@ -36,63 +24,90 @@ var getCardNameOf = function(path,callback) {
 	},callback);
 }
 
-var sendCardTypeMessage = function(preMessage, activity, callback) {
-	var message = preMessage;
-	if(hasBothValues(activity)) {
-		var oldName = "", newName = "";
-		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
-			oldName =  " (*" + cardData.card.name+"*)";
-			getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-				newName = " (*" + cardData.card.name+"*)";
-				message += activity['old_value'][0].card[0].number[0]['_'] + oldName +
-					" -> "+activity['new_value'][0].card[0].number[0]['_'] + newName;
-				callback(message, UPDATING_EVENT_MESSAGE);
-			});
+var noValue = function(valueObject) {
+	return(valueObject[0]['$']);
+}
+
+var getCardNumber = function(valueObject) {
+	return valueObject[0].card[0].number[0]['_'];
+}
+
+var getCardUrl = function(valueObject) {
+	return valueObject[0].card[0]['$'].url;
+}
+
+var getCardDetails = function(valueObject, callback) {
+	if(noValue(valueObject)) callback(getCardNumber(valueObject));
+	else{
+		requestForCardName(getCardUrl(valueObject), function(cardData) {
+			var cardDetails = getCardNumber(valueObject)+"("+cardData.card.name+")";
+			callback(cardDetails);
 		});
 	}
-	else if(hasOnlyNewValue(activity)){
-		message += activity['new_value'][0].card[0].number[0]['_'];
-		getCardNameOf(activity['new_value'][0].card[0]['$'].url, function(cardData){
-			message += "(*" +cardData.card.name+"*)";
-			callback(message, UPDATING_EVENT_MESSAGE);
+}
+
+var cardType = function(activity,callback) {
+	var message = activity.header.message + MESSAGE_TEMPLATE;
+	message = message.replace(/@NAME@/g, getNameOf(activity));
+	message = message.replace(/@AUTHOR/g, activity.header.author);
+	getCardDetails(activity['old_value'], function(oldValue){
+		message = message.replace(/@OLD_VALUE@/g, oldValue);
+		getCardDetails(activity['new_value'], function(newValue) {
+			message = message.replace(/@NEW_VALUE@/g, newValue);
+			callback(message, UPDAING_EVENT_LOG);
 		});
-	}
-	else {
-		message += activity['old_value'][0].card[0].number[0]['_'];
-		getCardNameOf(activity['old_value'][0].card[0]['$'].url, function(cardData){
-			message += "(*" +cardData.card.name+"*) -> nill";
-			callback(message, UPDATING_EVENT_MESSAGE);
-		});	
-	}
+	});
+}
+
+var getOldValue = function(activity) {
+	if(noValue(activity['old_value'])) return "nill";
+	return activity['old_value'][0];
+}
+
+var getNewValue = function(activity) {
+	if(noValue(activity['new_value'])) return "nill";
+	return activity['new_value'][0];
+}
+
+
+var stringType = function(activity, callback) {
+	var message = activity.header.message + MESSAGE_TEMPLATE;
+	message = message.replace(/@NAME@/g, getNameOf(activity));
+	message = message.replace(/@AUTHOR@/g, activity.header.author);
+	message = message.replace(/@OLD_VALUE@/g, getOldValue(activity));
+	message = message.replace(/@NEW_VALUE@/g, getNewValue(activity));
+	callback(message, UPDAING_EVENT_LOG);
 }
 
 activityList.pc = {
-	'Story Status': function(headerMessage, activity, callback) {
-		var values = getStringTypeValues(activity);
-		callback(headerMessage + "Story Status: "+ values +".\n", UPDATING_EVENT_MESSAGE);
-	},
-	'Planned Iteration' : function(headerMessage, activity, callback) {
-		sendCardTypeMessage(headerMessage+"Planned Iteration: ", activity, callback);
-	},
-	'Planned Release' : function(headerMessage, activity, callback) {
-		sendCardTypeMessage(headerMessage+"Planned Release: ", activity, callback);	
-	},
-	'Estimate' : function(headerMessage, activity, callback) {
-		var values = getStringTypeValues(activity);
-		callback(headerMessage+"Estimate: "+values+"\n",UPDATING_EVENT_MESSAGE);
-	}
+	'Story Status': stringType,
+	'Planned Iteration' : cardType,
+	'Planned Release' : cardType,
+	'Estimate' : stringType
 };
 
+var tagType = function(activity, callback) {
+	var message = activity.header.message + SINGEL_VALUE_MESSAGE;
+	message = message.replace(/@TYPE@/g,getTypeOf(activity));
+	message = message.replace(/@VALUE@/g, activity.tag[0]);
+	message = message.replace(/@AUTHOR@/g, activity.header.author);
+	callback(message,UPDAING_EVENT_LOG);
+}
 
-activityList['property-change'] = function(headerMessage, activity, callback) {
+
+activityList['property-change'] = function(activity, callback) {
 	if(activityList.pc[getNameOf(activity)])
-		activityList.pc[getNameOf(activity)](headerMessage, activity, callback);
+		activityList.pc[getNameOf(activity)](activity, callback);
+	else callback(null, "Filtered activity type. Not updating ...");
 }
 
-activityList['tag-addition'] = function(headerMessage, activity, callback) {
-	callback(headerMessage + "Tag added : *" + activity.tag[0] + "*",UPDATING_EVENT_MESSAGE);
-}
+activityList['tag-addition'] = tagType;
+activityList['tag-deletion'] = tagType;
 
-activityList['tag-deletion'] = function(headerMessage, activity, callback) {
-	callback(headerMessage + "Tag removed : *" + activity.tag[0] + "*",UPDATING_EVENT_MESSAGE);
-}
+
+
+
+
+
+
+

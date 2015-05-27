@@ -1,11 +1,11 @@
 var fs = require('fs');
 var Slack = require('slack-node');
 var activityList = require('./activityList.js');
-var data = JSON.parse(fs.readFileSync("./data.json"));
 var req = require('./request.js');
+var domain = require('domain').create();
+var data = JSON.parse(fs.readFileSync("./config.json"));
 var LAST_UPDATED_FILE_NAME = "./lastUpdated.json";
 var lastUpdated = JSON.parse(fs.readFileSync(LAST_UPDATED_FILE_NAME));
-var domain = require('domain').create();
 
 var ms = {};
 exports.ms = ms;
@@ -33,17 +33,18 @@ var isCardEvent = function(event) {
 	return(event.category[0]['$'].term == 'card');
 }
 
-var getUnUpdatedEventsFromMingleData = function(mingleData) {
+var getFilteredEvents = function(mingleData) {
 	var events = mingleData.feed.entry;
 	events = events.filter(isUnUpdated);
 	events = events.filter(isCardEvent);
 	return events;
 }
 
-var getHeaderMessage = function(event) {
-	messageToSend = "<"+event.link[1]['$'].href +"|"+ event.title[0]+">";
-	messageToSend += "\nAuthor: *" + event.author[0].name[0] + "*\n";
-	return messageToSend; 
+var getHeader = function(event) {
+	return {
+		message: "<"+event.link[1]['$'].href +"|"+ event.title[0]+">\n",
+		author: event.author[0].name[0]
+	}; 
 }
 
 var getTypeOf = function(activity) {
@@ -54,29 +55,28 @@ var getNameOfPCA = function(activity) {
 	return activity.property_definition[0].name[0];
 }
 
-var arePresent = function(activities) {
-	var present = false;
-	activities.forEach(function(activity){
-		var activityType = getTypeOf(activity);
-		if(activityType == 'property-change' && activityList.pc[getNameOfPCA(activity)]) present=true;
-		if(activityList[activityType]) present=true;
-	});
-	return present;
+var getActivities = function(event) {
+	return event.content[0].changes[0].change || [];
 }
 
-var getActivities = function(event) {
-	return event.content[0].changes[0].change;
+var getFilteredActivities = function(event) {
+	var activities = getActivities(event);
+	return activities.filter(function(activity) {
+		var activityType = getTypeOf(activity);
+		if(activityList[activityType]) return true;
+		return false;
+	});
 }
 
 var handleEvent = function(event, callback) {
-	var activities = getActivities(event) || [];
-	if(arePresent(activities)){
-		var headerMessage = getHeaderMessage(event);
+	var activities = getFilteredActivities(event);
+	if(activities.length > 0){
+		var header = getHeader(event);
 		activities.forEach(function(activity) {
-			if(activityList[getTypeOf(activity)])
-			activityList[getTypeOf(activity)](headerMessage,activity, callback);
+			activity.header = header;
+			activityList[getTypeOf(activity)](activity, callback);
 		});	
-	} else callback(null, "Ignoring event...(Filtered)");
+	} else callback(null, "Filtered all activities. Not Updating ...");
 }
 
 var handleEvents = function(events, callback) {
@@ -91,7 +91,7 @@ var updateLastUpdatedValue = function(newValue,project) {
 }
 
 ms.manupilateMingleData = function(mingleData, callback) { // callback with messages
-	var events = getUnUpdatedEventsFromMingleData(mingleData);
+	var events = getFilteredEvents(mingleData);
 	if(events.length>0){
 		handleEvents(events, callback);
 		updateLastUpdatedValue(mingleData.feed.updated[0],getProjectOf(events[0])); 
@@ -133,4 +133,3 @@ domain.on('error', function(error) {
 });
 
 domain.run(run);
-

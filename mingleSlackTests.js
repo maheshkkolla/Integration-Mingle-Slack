@@ -51,29 +51,14 @@ describe('Mingle-Slack-Integration', function(){
 			]}};
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
-				assert.equal(log, 'Ignoring event...(Filtered)');
+				assert.equal(log, 'Filtered all activities. Not Updating ...');
 				done();
 			});
-		});
-
-		it('should give a log message of updating event if entries contain property-change of name Story Status', function(done) {
-			var mingleData = { feed : { updated:[new Date().toISOString()] ,entry: [
-				{id:["https://testServer/projects/testProject/events.xml"], title: ["TITLE"], author:[{name:["AUTHOR"]}],updated:[new Date().toISOString()], 
-				category:[{'$':{term:'card'}}],
-				content:[{changes:[{change:[
-					{'$':{type:'property-change'},property_definition:[{name:["Story Status"]}], old_value:["OLD_VALUE"], new_value:['NEW_VALUE']}
-				]}]}]}
-			]}};
-
-			ms.manupilateMingleData(mingleData, function(message, log) {
-				assert.equal(log, 'Updating event...');
-				done();
-			});
-		});
-		
+		});		
 		it('should give the message with mingle event details if entries contain property-change of name Story Status', function(done) {
 			var mingleData = { feed : { updated:[new Date().toISOString()] ,entry: [
 				{id:["https://testServer/projects/testProject/events.xml"], title: ["TITLE"], author:[{name:["AUTHOR"]}],updated:[new Date().toISOString()], 
+				link:[{},{"$":{href:"here is link"}}],
 				category:[{'$':{term:'card'}}],
 				content:[{changes:[{change:[
 					{'$':{type:'property-change'},property_definition:[{name:["Story Status"]}], old_value:["OLD_VALUE"], new_value:['NEW_VALUE']}
@@ -81,9 +66,8 @@ describe('Mingle-Slack-Integration', function(){
 			]}};
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
-				assert.equal(message,"--- New Event ---\nTitle: TITLE\n" +
-					"Author: *AUTHOR*\t\tUpdated At: "+ new Date().toString()+"\n" +
-					"Story Status changed from *OLD_VALUE* to *NEW_VALUE*.\n");
+				assert.equal(message,"<here is link|TITLE>\n" +
+					"Story Status : *OLD_VALUE* -> *NEW_VALUE*\tby *AUTHOR*");
 				done();
 			});
 		});
@@ -91,6 +75,7 @@ describe('Mingle-Slack-Integration', function(){
 		it('should give the message with mingle event details if entries contain tag-addition', function(done) {
 			var mingleData = { feed : { updated:[new Date().toISOString()] ,entry: [
 				{id:["https://testServer/projects/testProject/events.xml"], title: ["TITLE"], author:[{name:["AUTHOR"]}],updated:[new Date().toISOString()], 
+					link:[{},{"$":{href:"here is link"}}],
 					category:[{'$':{term:'card'}}],
 					content:[{changes:[{change:[
 						{'$':{type:'tag-addition'}, tag:['TAG']}
@@ -98,9 +83,8 @@ describe('Mingle-Slack-Integration', function(){
 				]}};
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
-				assert.equal(message,"--- New Event ---\nTitle: TITLE\n" +
-					"Author: *AUTHOR*\t\tUpdated At: "+ new Date().toString()+"\n" +
-					"Tag added : *TAG*");
+				assert.equal(message,"<here is link|TITLE>\n" +
+					"tag-addition : *TAG*\tby *AUTHOR*");
 				done();
 			});
 		});
@@ -108,6 +92,7 @@ describe('Mingle-Slack-Integration', function(){
 		it('should give the message with mingle event details if entries contain tag-addition', function(done) {
 			var mingleData = { feed : { updated:[new Date().toISOString()] ,entry: [
 				{id:["https://testServer/projects/testProject/events.xml"], title: ["TITLE"], author:[{name:["AUTHOR"]}],updated:[new Date().toISOString()], 
+					link:[{},{"$":{href:"here is link"}}],	
 					category:[{'$':{term:'card'}}],
 					content:[{changes:[{change:[
 						{'$':{type:'tag-deletion'}, tag:['TAG']}
@@ -115,9 +100,25 @@ describe('Mingle-Slack-Integration', function(){
 				]}};
 
 			ms.manupilateMingleData(mingleData, function(message, log) {
-				assert.equal(message,"--- New Event ---\nTitle: TITLE\n" +
-					"Author: *AUTHOR*\t\tUpdated At: "+ new Date().toString()+"\n" +
-					"Tag removed : *TAG*");
+				assert.equal(message,"<here is link|TITLE>\n" +
+					"tag-deletion : *TAG*\tby *AUTHOR*");
+				done();
+			});
+		});
+
+		it('should give the message with mingle event details if entries contain property-change of Estimate', function(done) {
+			var mingleData = { feed : { updated:[new Date().toISOString()] ,entry: [
+				{id:["https://testServer/projects/testProject/events.xml"], title: ["TITLE"], author:[{name:["AUTHOR"]}],updated:[new Date().toISOString()], 
+				link:[{},{"$":{href:"here is link"}}],
+				category:[{'$':{term:'card'}}],
+				content:[{changes:[{change:[
+					{'$':{type:'property-change'},property_definition:[{name:["Estimate"]}], old_value:["OLD_VALUE"], new_value:['NEW_VALUE']}
+				]}]}]}
+			]}}; 
+
+			ms.manupilateMingleData(mingleData, function(message, log) {
+				assert.equal(message,"<here is link|TITLE>\n" +
+					"Estimate : *OLD_VALUE* -> *NEW_VALUE*\tby *AUTHOR*");
 				done();
 			});
 		});
