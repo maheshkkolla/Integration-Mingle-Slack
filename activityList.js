@@ -37,7 +37,7 @@ var getCardUrl = function(valueObject) {
 }
 
 var getCardDetails = function(valueObject, callback) {
-	if(noValue(valueObject)) callback(getCardNumber(valueObject));
+	if(noValue(valueObject)) callback("nill");
 	else{
 		requestForCardName(getCardUrl(valueObject), function(cardData) {
 			var cardDetails = getCardNumber(valueObject)+"("+cardData.card.name+")";
