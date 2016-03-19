@@ -1,0 +1,14 @@
+[
+{
+	"mingle" : {
+		"host" : "YOUR_MINGLE_HOST",
+		"path" : "/api/v2/projects/PROJECT_NAME/feeds/events.xml",
+		"hash" : "BASE64_ENCODING_OF_YOUR_USER_NAME_AND_PASSWORD"
+	},
+	"slack" : {
+		"webhook": "YOUR_SLACK_WEBHOOK",
+		"channel": "CHANNEL_TO_POST",
+		"userName": "USERNAME"
+	}	
+},
+]
